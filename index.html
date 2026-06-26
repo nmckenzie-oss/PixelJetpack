@@ -9,7 +9,7 @@
   <style>
 *{margin:0;padding:0}
 canvas{display:block;image-rendering:pixelated}
-body{font-family:'Press Start 2P',cursive;overflow:hidden}
+body{font-family:'Press Start',cursive;overflow:hidden}
 #home-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:10}
 #home-bg{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.5}
 #home-content{text-align:center;color:#fff;max-width:800px;padding:20px;position:relative;z-index:2}
@@ -111,17 +111,16 @@ if(lastStageIndex!==0)clearObstacles();
 function clearObstacles(){obstacles=[];obstacleSpawnTimer=0;}
 
 // Pixel art data
-const playerData1=["..x.................","x....uuuuuu.........","x...uppppppu........","x.uppuuuuuuu.......","x.uppuuuuuuuu......","xupppuaaauuuu......","xuppuaaaaa...u.....","xxpuaaaaaa...u.....","xxxxuaauuaa...u....","xxxxuaawuua...u....","xxxxuaawuaa...u....","xxpuaaaaaaa..u.....","upuaaaaaa..u.......","uppuaaaaa..u.......","ppuaaaaa..u........","..upuaaaaa.u.......","upuuuuuuu.........","uuppppppu..........","uppuuuuuuu.........","uppppupppupu.......","upppppuppuppu......","uppppupppuppu......","uppppuuuuupppuu..aa","uppppupppuppuppuaaa","uppppppppupppppuaaa","upppppppuaappppuaaa","uppppppuaaappppuaaa","..uuupppuaaauuuu.aaa","..uppuuuuaaaau.......","...uppppaaapu.......","...uxxxxxxxxu.......","...uxxxxxxxxxu......","...uxxxxxxxxxu......","....upppppppppu.....","....uppppppppppu....","...uuppppppppppu....","...uppppppppppppu...","...upppppuppppppu...","...upppppuuppppppu..","..uppppppu.upppppu...","uupppppu...upppppu..","uppppppu..upppppu...","uupppppuu..upppu....","upppppppu..uppppu....","uuuuppppu...upppu....","uuuuupu...uuppu......","uuuuuu....uuupu......","uuuu....uuuuuu.......","uuu....uuuuu........","uuu....uuuuu........","uu.....uuuu.........","...........uu........","............u.."];
-const playerData2=["...x...............","..x..uuuuuu.........","..x.uppppppu........","x.uppuuuuuuu.......","x.uppuuuuuuuu......","xupppuaaauuuu......","xuppuaaaaa...u.....","xxpuaaaaaa...u.....","xxxxuaauuaa...u....","xxxxuaaaaua...u....","xxxxuaaaaaa...u....","xxpuaaaaaaa..u.....","upuaaaaaa..u.......","uppuaaaaa..u.......","ppuaaaaa..u........","..upuaaaaa.u.......","upuuuuuuu.........","uippppppu..........","upuuuuuuu.........","upppupppupu.......","upppppuppupuu......","uppppupppuppu......","uppppuuuuupppuu....","appppupppuppupu..aa","appppppppupppppuaaa","appppppppuaappppuaaa","appppppuaaappppuaaa","auuuppppuaaappppuaaa","..uuuuuuuaaaauuuu.aaa","...uppppaaapu.......","...uxxxxxxxxu.......","...uxxxxxxxxxu......","...uxxxxxxxxxu......","....upppppppppu.....","....uppppppppppu....","...uppppppppppu.....","...upppppppppppu....","...upppppppppppu....","...upppppuppppppu..","..upppppu.upppppu...","uupppppu..upppppu..","uppppppu.upppppu...","uupppppuu.upppu....","uuppppppu.uppppu....","uuuppppu...upppu....","uuuupu...uuppu......","uuuuu....uuupu......","uuu....uuuuuu.......","uu....uuuuu........","uu....uuuuu........","uu.....uuuu.........","...........uu........","............u.."];
-
-const jetpackData=["......yyyyyy","....yyyyyyy","...yyyyyyyy","yyyyyyyyyy","byyyyyyyyyyy","b00yyyyyyyy","b00yyyyyyyy","b00yyyyyyyy","b00yyyyyyyy","b00yyyyyyyy","b00yyyyyyyy","b00yyyyyyyy","b00yyyyyyyy","b00yyyyyyyy","byyyyyyyyyyy","..yyyyyyyyyy","...yyyyyyyy","....yyyyyyy","....yyyyyyy","......yyyyyy"];
+const playerData1=["..x.................","..x....uuuuuu.......","..x...uppppppu......","...x.uppuuuuuuu.....","...x.uppuuuuuuuu....","...xupppuaaauuuu....","...xuppuaaaaa...u...","...xxpuaaaaaa...u...","..xxxxuaauuaa...u...","..xxxxuaawuua...u...","..xxxxuaawuaa...u...","...xxpuaaaaaaa..u...","....upuaaaaaa..u....","....uppuaaaaa..u....",".....ppuaaaaa..u....",".....upuaaaaa.u.....",".....upuuuuuuu......","....uuppppppu.......","...uppuuuuuuu.......","..uppppupppupu......","..upppppuppuppu.....","..uppppupppuppu.....",".uppppuuuuupppuu..aa",".uppppupppuppuppuaaa",".uppppppppupppppuaaa",".upppppppuaappppuaaa",".uppppppuaaappppuaaa","..uuupppuaaauuuu.aaa","..uppuuuuaaaau.......","...uppppaaapu.......","...uxxxxxxxxu.......","...uxxxxxxxxxu......","...uxxxxxxxxxu......","....upppppppppu.....","....uppppppppppu.....","...uuppppppppppu....","...uppppppppppppu...","...upppppuppppppu...","...upppppuuppppppu..","..uppppppu.upppppu...",".uupppppu...upppppu..",".uppppppu..upppppu...","uupppppuu..upppu....","upppppppu..uppppu....","uuuuppppu...upppu.....","uuuuupu...uuppu......","uuuuuu....uuupu......","uuuu....uuuuuu.......",".uuu....uuuuu.......",".uuu....uuuuu.......","..uu.....uuuu.......","...........uu.......","............u......."];
+const playerData2=["....x...............","....x..uuuuuu.......","....x.uppppppu......","...x.uppuuuuuuu.....","...x.uppuuuuuuuu....","...xupppuaaauuuu....","...xuppuaaaaa...u...","...xxpuaaaaaa...u...","..xxxxuaauuaa...u...","..xxxxuaawuua...u...","..xxxxuaawuaa...u...","...xxpuaaaaaaa..u...","....upuaaaaaa..u....","....uppuaaaaa..u....",".....ppuaaaaa..u....",".....upuaaaaa.u.....",".....upuuuuuuu......","....uuppppppu.......","....upuuuuuuu.......","...upppupppupu......","..upppppuppupuu.....","..uppppupppuppu.....",".uppppuuuuupppuu....",".uppppupppuppupu..aa",".uppppppppupppppuaaa",".upppppppuaappppuaaa",".uppppppuaaappppuaaa",".uuuppppuaaappppuaaa","..uuuuuuuaaaauuuu.aaa","...uppppaaapu.......","...uxxxxxxxxu.......","...uxxxxxxxxxu......","...uxxxxxxxxxu......","....upppppppppu.....","....uppppppppppu.....","....uppppppppppu....","....upppppppppppu...","....upppppppppppu...","....upppppuppppppu..","...upppppu.upppppu...","..uupppppu..upppppu..","..uppppppu.upppppu...",".uupppppuu.upppu....",".uuppppppu.uppppu....",".uuuppppu...upppu.....",".uuuupu...uuppu......",".uuuuu....uuupu......",".uuu....uuuuuu.......","..uu....uuuuu.......","..uu....uuuuu.......","..uu.....uuuu.......","...........uu.......","............u......."];
+const jetpackData=["......yyyyyy",".....yyyyyyy","....yyyyyyyy","..yyyyyyyyyy","byyyyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","byyyyyyyyyyy","..yyyyyyyyyy","....yyyyyyyy",".....yyyyyyy",".....yyyyyyy","......yyyyyy"];
 
 const fireFrame1=["...d.dd...","y...dld.b","w.d.d.ldb","..y..ddllb","..ddddlllb",".dddllrrrb","ddllrrrrrb",".ddlllrrrb","w.yddllllb","..dlldddlb","..d.d.d.db","...d.....b","........."];
 const fireFrame2=[".........b","....d..ddb","w..drdrdlb","..lddllrb",".ddllrrrb","d.dllrrrrb","ddlllrrrb","...ddrrlrb","..w.ddddlb","...ydrd.db",".........b"];
 const fireFrame3=["..........","....dd..b","....y..ddb",".y...d.dlb","..ddddllrb",".dddllrrrb","ddlllrrrrb",".ddlllrrrb",".w.ddlllrb","....ddddlb","....d.d.db","...d.....b"];
 const fireFrame4=["...........",".........b","..w....ddb","....wd.dlb","....ddlllb",".wddlllrrb",".ddlllrrrb","..ddlllrrb","....dllllb","..ww.ddllb","......lddb","......d..b","..........."];
 
-const colorMap={'b':'#000000','w':'#ffffff','r':'#ff2222','l':'#ffff00','y':'#cccccc','x':'#0066ff','p':'#cc99ff','d':'#ff9900','c':'#003366','g':'#1a6b2e','k':'#228B22','f':'#ffdd00','u':'#9933ff','a':'#ffcc00','0':'#00ff00'};
+const colorMap={'b':'#000000','w':'#ffffff','r':'#ff2222','l':'#ffff00','y':'#cccccc','x':'#c27ba0','p':'#674ea7','d':'#c68642','c':'#003366','g':'#1a6b2e','k':'#228B22','f':'#ffdd00','u':'#741b47','a':'#c68642','0':'#00ff00'};
 
 const trexData1=["..gg.........",".gggg........","ggrgg........","ggggg........",".gggg........",".ggggg.......","...ggg.......","...gggg......","..wkkggg....g","...gggggg..gg","....ggkkgggg.",".....gkkkgg..",".....ykkgg...",".....ykk.....","......ykk....",".....ywkk...."];
 const trexData2=["..gg.........",".gggg........","ggrgg........","ggggg........","...gg........","..gggg.......",".ggggg.......","...gggg......","...gkggg.....","..wkggggg...g","....ggkkggggg",".....gkkkggg.",".....ykkkk...","......y.kk...","....yyy.k....",".....y.wk...."];
@@ -760,15 +759,15 @@ const fi=Math.floor(player.frameCounter/6)%2;
 let cf=fi===0?playerData1:playerData2;
 drawPixelArt(cf,player.x,player.y,PIXEL);
 
-const jetpackX=player.x+4*PIXEL;
-const jetpackY=player.y+25*PIXEL;
+const jetpackX=player.x-4*PIXEL;
+const jetpackY=player.y+16*PIXEL;
 drawPixelArt(jetpackData,jetpackX,jetpackY,PIXEL);
 
 if(player.isClicking&&player.fireFrame>0){
 const fireFrames=[fireFrame1,fireFrame2,fireFrame3,fireFrame4];
 const fireFrame=fireFrames[player.fireFrame-1];
-const fireX=jetpackX-1*PIXEL;
-const fireY=jetpackY+20*PIXEL;
+const fireX=jetpackX-9*PIXEL;
+const fireY=jetpackY+4*PIXEL;
 drawPixelArt(fireFrame,fireX,fireY,PIXEL);
 }
 
