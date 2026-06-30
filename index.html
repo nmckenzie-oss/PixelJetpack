@@ -9,10 +9,10 @@
   <style>
 *{margin:0;padding:0}
 canvas{display:block;image-rendering:pixelated}
-body{font-family:'Press Start',cursive;overflow:hidden}
+body{font-family:'Press Start 2P',cursive;overflow:hidden}
 #home-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:10}
 #home-bg{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.5}
-#home-content{text-align:center;color:#fff;max-width:800px;padding:20px;position:relative;z-index:2}
+#home-content{text-align:center;color:#000000;max-width:800px;padding:20px;position:relative;z-index:2}
 #start-btn{font-family:'Press Start 2P';font-size:24px;padding:24px 48px;background:#22cc44;color:#000;border:none;cursor:pointer;margin-bottom:32px;position:relative;z-index:100}
 #start-btn:hover{background:#33dd55}
 #dev-code{font-family:'Press Start 2P';font-size:16px;padding:12px 20px;background:#222;color:#0f0;border:1px solid #0f0;text-align:center;width:320px;position:relative;z-index:100}
@@ -26,7 +26,7 @@ body{font-family:'Press Start',cursive;overflow:hidden}
   <div id="home-screen">
    <canvas id="home-bg"></canvas>
    <div id="home-content">
-    <h1 style="font-size:48px;margin-bottom:40px;color:#ffdd00">PIXEL JETPACK</h1>
+    <h1 style="font-size:48px;margin-bottom:40px;color:#ff00f2">PIXEL JETPACK</h1>
     <div style="font-size:16px;line-height:2.4;text-align:left;margin-bottom:40px">
      <p>RULES:</p>
      <p>- Hold SPACE/CLICK to boost up</p>
@@ -63,6 +63,7 @@ function getDeltaTime(){return currentDelta;}
 const SCALE=0.9;
 const PIXEL=Math.max(3,Math.floor(window.innerWidth/160))*SCALE;
 const GRAVITY=0.285;
+const PLAYER_SCALE = PIXEL * 0.35;
 const BIKE_HEIGHT=24*PIXEL;
 const BOOST_FORCE=-6;
 const GROUND_SPEED=6.25;
@@ -181,7 +182,7 @@ let ufos=[];let ufoSpawnTimer=0;
 let alienTowers=[];let alienTowerSpawnTimer=0;
 let alienBolts=[];
 
-function initSpaceStars(){spaceStars=[];for(let i=0;i<100;i++)spaceStars.push({x:rng()*2000,y:rng()*0.8,brightness:0.3+rng()*0.7,size:1+Math.floor(rng()*3),twinkle:rng()*Math.PI*2});}
+function initSpaceStars(){spaceStars=[];for(let i=0;i<10;i++)spaceStars.push({x:rng()*2000,y:rng()*0.8,brightness:0.3+rng()*0.7,size:1+Math.floor(rng()*3),twinkle:rng()*Math.PI*2});}
 function initSpacePlanets(){spacePlanets=[];const colors=[['#664422','#775533'],['#553366','#664477'],['#445566','#556677'],['#664433','#775544']];for(let i=0;i<4;i++){spacePlanets.push({offset:600+rng()*2400,y:0.08+rng()*0.35,radius:12+Math.floor(rng()*30),color1:colors[i%4][0],color2:colors[i%4][1],hasRing:rng()>0.5});}}
 function initSpaceSatellites(){spaceSatellites=[];for(let i=0;i<4;i++)spaceSatellites.push({offset:rng()*2000,y:0.25+rng()*0.35});}
 initSpaceStars();initSpacePlanets();initSpaceSatellites();
@@ -311,18 +312,33 @@ if(ti.transitioning)ctx.globalAlpha=1;
 });}
 
 function drawSpaceSatellites(){
-const speed=groundOffset*0.4;
-const ti=getTransitionInfo();
-spaceSatellites.forEach(s=>{
-const x=((s.offset-speed)%2000+2000)%2000-100;
-const y=canvas.height*s.y;
-if(ti.transitioning)ctx.globalAlpha=1-ti.alpha;
-ctx.fillStyle='#aaaaaa';ctx.fillRect(x,y,PIXEL*3,PIXEL*2);
-if(ti.transitioning)ctx.globalAlpha=1-ti.alpha;
-ctx.fillStyle='#4488ff';ctx.fillRect(x-PIXEL*4,y-PIXEL,PIXEL*4,PIXEL*4);ctx.fillRect(x+PIXEL*3,y-PIXEL,PIXEL*4,PIXEL*4);
-ctx.fillStyle='#666666';ctx.fillRect(x-PIXEL*1,y+PIXEL*2,PIXEL*5,PIXEL);
-if(ti.transitioning)ctx.globalAlpha=1;
-});}
+    const speed=groundOffset*0.4;
+    const ti=getTransitionInfo();
+
+    spaceSatellites.forEach(s=>{
+        const x=((s.offset-speed)%2000+2000)%2000-100;
+        const y=canvas.height*s.y;
+
+        ctx.save();                 // 🔥 isolate each satellite
+        ctx.filter = "blur(4px)";   // adjust strength here
+
+        if(ti.transitioning) ctx.globalAlpha = 1 - ti.alpha;
+
+        ctx.fillStyle='#aaaaaa';
+        ctx.fillRect(x,y,PIXEL*3,PIXEL*2);
+
+        ctx.fillStyle='#4488ff';
+        ctx.fillRect(x-PIXEL*4,y-PIXEL,PIXEL*4,PIXEL*4);
+        ctx.fillRect(x+PIXEL*3,y-PIXEL,PIXEL*4,PIXEL*4);
+
+        ctx.fillStyle='#666666';
+        ctx.fillRect(x-PIXEL*1,y+PIXEL*2,PIXEL*5,PIXEL);
+
+        if(ti.transitioning) ctx.globalAlpha = 1;
+
+        ctx.restore();              // 🔥 removes blur immediately
+    });
+}
 
 function drawSpaceStars(){
 const t=performance.now()*0.001;
@@ -539,8 +555,26 @@ return false;
 }
 
 function spawnMeteor(){
-const rockColor=['#222222','#8B4513','#666666'][Math.floor(rng()*3)];
-meteors.push({x:canvas.width*(0.3+rng()*0.7),y:-PIXEL*15,vx:-GROUND_SPEED*0.8,vy:GROUND_SPEED*1.2,frame:Math.floor(rng()*4),frameCounter:0,rockColor:rockColor});
+    const rockColor = ['#222222','#8B4513','#666666'][Math.floor(rng()*3)];
+
+    // random angle but biased down-left
+    let angle = Math.PI * 0.75 + rng() * Math.PI * 0.5;
+
+    let speed = GROUND_SPEED * (0.8 + rng() * 0.6);
+
+    let vx = Math.cos(angle) * speed;
+    let vy = Math.sin(angle) * speed;
+
+    meteors.push({
+        x: canvas.width * (0.3 + rng() * 0.7),
+        y: -PIXEL * 15,
+        vx: vx,
+        vy: vy,
+        angle: angle,   // IMPORTANT for rotation
+        frame: Math.floor(rng() * 4),
+        frameCounter: 0,
+        rockColor: rockColor
+    });
 }
 function spawnUfo(){
 ufos.push({x:canvas.width+50,y:canvas.height*(0.1+rng()*0.5),state:'approach',speed:GROUND_SPEED*0.8,frameCounter:0,dodgeDir:0,dodgeDist:0,dodgeTarget:9*PIXEL*4,pauseTimer:0,dodgeTrigger:[0.25,0.5,0.7][Math.floor(rng()*3)]});
@@ -587,7 +621,35 @@ for(let i=alienBolts.length-1;i>=0;i--){alienBolts[i].progress+=0.04;if(alienBol
 function drawSpaceEnemies(){
 if(!isSpace())return;
 const mScale=PIXEL*0.9;
-meteors.forEach(m=>{const cmap=Object.assign({},colorMap,{f:m.rockColor});drawPixelArt(meteorFrames[m.frame],m.x,m.y,mScale,cmap);});
+meteors.forEach(m=>{
+    const cmap = Object.assign({}, colorMap, {f: m.rockColor});
+
+    const frame = meteorFrames[m.frame];
+
+    const mScale = PIXEL * 0.9;
+
+    const w = frame[0].length * mScale;
+    const h = frame.length * mScale;
+
+    // pivot (your custom center point)
+    const px = 2 * mScale;
+    const py = h - (2 * mScale);
+
+    ctx.save();
+
+    // move to meteor position
+    ctx.translate(m.x, m.y);
+
+    // rotate around pivot
+    ctx.rotate(m.angle + Math.PI);
+
+    // shift so pivot becomes origin
+    ctx.translate(-px, -py);
+
+    drawPixelArt(frame, 0, 0, mScale, cmap);
+
+    ctx.restore();
+});
 const ufoColorMap={'c':'#66ffcc','y':'#cccccc','k':'#333333','p':'#ff44ff','x':'#44ff44'};
 ufos.forEach(u=>{const fi=Math.floor(u.frameCounter/6)%3;drawPixelArt(ufoFrames[fi],u.x,u.y,PIXEL,ufoColorMap);});
 const towerColorMap={'l':'#00ff00','k':'#333333','c':'#00cccc','r':'#ff3333','x':'#ff6600'};
@@ -649,13 +711,13 @@ if(obstacleSpawnTimer>=SPAWN_INTERVAL){spawnObstacle();obstacleSpawnTimer=0;}
 for(let i=obstacles.length-1;i>=0;i--){
 const obs=obstacles[i];obs.x-=GROUND_SPEED;obs.frameCounter++;
 if(obs.type.startsWith('pteranodon')){
-const amplitude=obs.type==='pteranodon-blue'?30*1.5*1.5:20;
-obs.y=obs.baseY+Math.sin(obs.frameCounter*0.05*0.67)*amplitude;
-const extraSpeed=obs.type==='pteranodon-blue'?GROUND_SPEED*0.25*1.5:obs.type==='pteranodon'?GROUND_SPEED*0.25:0;
+const amplitude=obs.type==='pteranodon-blue'?60*1.5*1.5:20;
+obs.y=obs.baseY+Math.sin(obs.frameCounter*0.05*-0.37)*amplitude;
+const extraSpeed=obs.type==='pteranodon-blue'?GROUND_SPEED*0.25*2.2:obs.type==='pteranodon'?GROUND_SPEED*0.25:0;
 obs.x-=extraSpeed;
 }else if(obs.type==='trex'){
 if(rng()<0.005){obs.jumpActive=true;obs.jumpTimer=0;}
-if(obs.jumpActive){obs.jumpTimer++;const jumpHeight=Math.sin((obs.jumpTimer/30)*Math.PI)*40*PIXEL;obs.y=(groundY()-60)-jumpHeight;if(obs.jumpTimer>=30){obs.jumpActive=false;obs.y=groundY()-60;}}
+if(obs.jumpActive){obs.jumpTimer++;const jumpHeight=Math.sin((obs.jumpTimer/30)*Math.PI)*40*PIXEL;obs.y=(groundY()+60)-jumpHeight;if(obs.jumpTimer>=30){obs.jumpActive=false;obs.y=groundY()-60;}}
 }
 if(obs.x<-200)obstacles.splice(i,1);
 }}
@@ -676,7 +738,11 @@ drawPixelArt(f,obs.x,obs.y,PIXEL*1.5*obs.sizeScale);
 });}
 
 function checkObstacleCollision(){
-const pL=player.x,pR=player.x+8*PIXEL,pT=player.y,pB=player.y+BIKE_HEIGHT;
+const pL = player.x + 2 * PLAYER_SCALE;
+const pR = player.x + 10 * PLAYER_SCALE;
+
+const pT = player.y + 2 * PLAYER_SCALE;
+const pB = player.y + 20 * PLAYER_SCALE;
 for(const obs of obstacles){
 let w,h;
 if(obs.type.startsWith('pteranodon')){w=18*PIXEL*obs.sizeScale;h=11*PIXEL*obs.sizeScale;}
@@ -751,24 +817,38 @@ else{grad.addColorStop(0,'#55ccff');grad.addColorStop(1,'#aaeeff');}
 ctx.fillStyle=grad;ctx.fillRect(0,0,canvas.width,canvas.height);
 
 if(gameStarted){
-if(isSpace())drawSpaceStars();
+if (isSpace()) {
+    ctx.save();
+    ctx.filter = "blur(2px)"; // or whatever blur you use
+
+    drawSpaceStars();
+
+    ctx.restore();
+}
 drawClouds();drawMountains();drawTrees();drawGround();drawObstacles();drawDesertEnemies();drawSpaceEnemies();drawCoins();
 }
 
-const fi=Math.floor(player.frameCounter/6)%2;
-let cf=fi===0?playerData1:playerData2;
-drawPixelArt(cf,player.x,player.y,PIXEL);
+const PLAYER_SCALE = PIXEL * 0.35;
+const JETPACK_SCALE = PIXEL * 0.35;
+const FIRE_SCALE = PIXEL * 0.35;
 
-const jetpackX=player.x-4*PIXEL;
-const jetpackY=player.y+16*PIXEL;
-drawPixelArt(jetpackData,jetpackX,jetpackY,PIXEL);
+const jetpackX = player.x - 2 * PLAYER_SCALE;
+const jetpackY = player.y + 15 * PLAYER_SCALE;
+
+// Draw jetpack FIRST (behind player)
+drawPixelArt(jetpackData, jetpackX, jetpackY, JETPACK_SCALE);
+
+const fi = Math.floor(player.frameCounter/6)%2;
+let cf = fi===0 ? playerData1 : playerData2;
+drawPixelArt(cf, player.x, player.y, PLAYER_SCALE);
 
 if(player.isClicking&&player.fireFrame>0){
 const fireFrames=[fireFrame1,fireFrame2,fireFrame3,fireFrame4];
 const fireFrame=fireFrames[player.fireFrame-1];
-const fireX=jetpackX-9*PIXEL;
-const fireY=jetpackY+4*PIXEL;
-drawPixelArt(fireFrame,fireX,fireY,PIXEL);
+const fireX = jetpackX - 9 * PLAYER_SCALE;
+const fireY = jetpackY + 3 * PLAYER_SCALE;
+
+drawPixelArt(fireFrame, fireX, fireY, FIRE_SCALE);
 }
 
 if(!gameStarted&&!gameOver){
@@ -791,9 +871,9 @@ ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
 ctx.font='bold '+Math.floor(15*PIXEL)+'px "Press Start 2P"';
 ctx.fillText('GAME OVER',canvas.width/2,canvas.height/2-100);
 ctx.font='bold '+Math.floor(9*PIXEL)+'px "Press Start 2P"';
-ctx.fillText('Final Score: '+finalScore,canvas.width/2,canvas.height/2+20);
+ctx.fillText('Final Score: '+finalScore,canvas.width/2,canvas.height/2+30);
 ctx.font='bold '+Math.floor(6*PIXEL)+'px "Press Start 2P"';
-ctx.fillText('[SPACE/CLICK TO CONTINUE]',canvas.width/2,canvas.height/2+80);
+ctx.fillText('[SPACE/CLICK TO CONTINUE]',canvas.width/2,canvas.height/2+100);
 }}
 
 function interpolateColor(c1,c2,t){
