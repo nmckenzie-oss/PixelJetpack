@@ -16,6 +16,16 @@ body{font-family:'Press Start 2P',cursive;overflow:hidden}
 #start-btn{font-family:'Press Start 2P';font-size:24px;padding:24px 48px;background:#22cc44;color:#000;border:none;cursor:pointer;margin-bottom:32px;position:relative;z-index:100}
 #start-btn:hover{background:#33dd55}
 #dev-code{font-family:'Press Start 2P';font-size:16px;padding:12px 20px;background:#222;color:#0f0;border:1px solid #0f0;text-align:center;width:320px;position:relative;z-index:100}
+#memory-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);z-index:20;color:#fff;padding:20px;box-sizing:border-box}
+#memory-panel{width:min(900px,96vw);max-height:92vh;overflow:auto;background:#14142b;border:4px solid #fff;padding:24px;box-sizing:border-box;box-shadow:0 0 0 6px #000}
+#memory-title{font-size:20px;line-height:1.5;text-align:center;margin-bottom:16px;color:#ffdd00}
+#memory-status{font-size:12px;line-height:1.8;text-align:center;margin-bottom:20px;color:#aaf}
+#memory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.memory-card{font-family:'Press Start 2P';font-size:10px;line-height:1.45;min-height:94px;padding:10px;background:#24244a;color:#fff;border:3px solid #8080ff;cursor:pointer;text-align:center;word-break:break-word}
+.memory-card.selected{background:#ffdd00;color:#000;border-color:#fff}
+.memory-card.matched{background:#1f9d55;color:#fff;border-color:#afffcf;cursor:default}
+#memory-finish{display:none;margin:20px auto 0;font-family:'Press Start 2P';font-size:14px;padding:16px 22px;background:#22cc44;color:#000;border:0;cursor:pointer}
+@media(max-width:700px){#memory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.memory-card{font-size:9px;min-height:88px}#memory-title{font-size:15px}}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
@@ -31,13 +41,20 @@ body{font-family:'Press Start 2P',cursive;overflow:hidden}
      <p>RULES:</p>
      <p>- Hold SPACE/CLICK to boost up</p>
      <p>- Avoid obstacles and enemies</p>
-     <p>- Collect coins</p>
+     <p>- Collect fuel cans and match terms</p>
      <p>- Don't hit ceiling or floor</p>
      <p>- Survive multiple biomes!</p>
     </div>
     <div id="home-stats" style="font-size:20px;margin-bottom:40px"></div><button id="start-btn" type="button">PRESS START</button>
-    <div style="margin-top:32px"><input id="dev-code" type="text" placeholder="DEV CODE">
+    <div style="margin-top:32px"><input id="dev-code" type="text" placeholder="CLASS CODE">
     </div>
+   </div>
+  </div>
+  <div id="memory-screen">
+   <div id="memory-panel">
+    <div id="memory-title">FUEL CHALLENGE</div>
+    <div id="memory-status"></div>
+    <div id="memory-grid"></div><button id="memory-finish" type="button">ADD FUEL</button>
    </div>
   </div>
   <script src="/_sdk/editing_sdk.js"></script>
@@ -78,9 +95,48 @@ const homeScreen=document.getElementById('home-screen');
 const homeStats=document.getElementById('home-stats');
 const startBtn=document.getElementById('start-btn');
 const devCodeInput=document.getElementById('dev-code');
+const memoryScreen=document.getElementById('memory-screen');
+const memoryStatus=document.getElementById('memory-status');
+const memoryGrid=document.getElementById('memory-grid');
+const memoryFinish=document.getElementById('memory-finish');
 
 let highScore=parseInt(localStorage.getItem('pixelJetpackHighScore'))||0;
 let coinCount=parseInt(localStorage.getItem('pixelJetpackCoins'))||0;
+
+// Teacher setup: add/edit packs here. Students type the pack code on the home screen.
+const QUESTION_PACKS={
+starter:{
+name:'Starter Terms',
+cards:[
+{term:'Gravity',definition:'A force that pulls objects down'},
+{term:'Fuel',definition:'Energy used to move'},
+{term:'Orbit',definition:'A curved path around a planet'},
+{term:'Velocity',definition:'Speed in a direction'},
+{term:'Friction',definition:'A force that slows movement'},
+{term:'Mass',definition:'How much matter something has'}
+]},
+science:{
+name:'Science',
+cards:[
+{term:'Evaporation',definition:'Liquid changing into gas'},
+{term:'Condensation',definition:'Gas changing into liquid'},
+{term:'Producer',definition:'An organism that makes its own food'},
+{term:'Consumer',definition:'An organism that eats other organisms'},
+{term:'Habitat',definition:'The place where an organism lives'},
+{term:'Variable',definition:'Something that can change in an experiment'}
+]},
+maths:{
+name:'Maths',
+cards:[
+{term:'Product',definition:'The answer to multiplication'},
+{term:'Quotient',definition:'The answer to division'},
+{term:'Numerator',definition:'The top number in a fraction'},
+{term:'Denominator',definition:'The bottom number in a fraction'},
+{term:'Perimeter',definition:'Distance around the outside'},
+{term:'Area',definition:'Space inside a flat shape'}
+]}
+};
+let activeQuestionPack=QUESTION_PACKS.starter;
 
 function getCurrentStageIndex(){
 if(devMode==='dinosaur')return 0;
@@ -115,6 +171,7 @@ function clearObstacles(){obstacles=[];obstacleSpawnTimer=0;}
 const playerData1=["..x.................","..x....uuuuuu.......","..x...uppppppu......","...x.uppuuuuuuu.....","...x.uppuuuuuuuu....","...xupppuaaauuuu....","...xuppuaaaaa...u...","...xxpuaaaaaa...u...","..xxxxuaauuaa...u...","..xxxxuaawuua...u...","..xxxxuaawuaa...u...","...xxpuaaaaaaa..u...","....upuaaaaaa..u....","....uppuaaaaa..u....",".....ppuaaaaa..u....",".....upuaaaaa.u.....",".....upuuuuuuu......","....uuppppppu.......","...uppuuuuuuu.......","..uppppupppupu......","..upppppuppuppu.....","..uppppupppuppu.....",".uppppuuuuupppuu..aa",".uppppupppuppuppuaaa",".uppppppppupppppuaaa",".upppppppuaappppuaaa",".uppppppuaaappppuaaa","..uuupppuaaauuuu.aaa","..uppuuuuaaaau.......","...uppppaaapu.......","...uxxxxxxxxu.......","...uxxxxxxxxxu......","...uxxxxxxxxxu......","....upppppppppu.....","....uppppppppppu.....","...uuppppppppppu....","...uppppppppppppu...","...upppppuppppppu...","...upppppuuppppppu..","..uppppppu.upppppu...",".uupppppu...upppppu..",".uppppppu..upppppu...","uupppppuu..upppu....","upppppppu..uppppu....","uuuuppppu...upppu.....","uuuuupu...uuppu......","uuuuuu....uuupu......","uuuu....uuuuuu.......",".uuu....uuuuu.......",".uuu....uuuuu.......","..uu.....uuuu.......","...........uu.......","............u......."];
 const playerData2=["....x...............","....x..uuuuuu.......","....x.uppppppu......","...x.uppuuuuuuu.....","...x.uppuuuuuuuu....","...xupppuaaauuuu....","...xuppuaaaaa...u...","...xxpuaaaaaa...u...","..xxxxuaauuaa...u...","..xxxxuaawuua...u...","..xxxxuaawuaa...u...","...xxpuaaaaaaa..u...","....upuaaaaaa..u....","....uppuaaaaa..u....",".....ppuaaaaa..u....",".....upuaaaaa.u.....",".....upuuuuuuu......","....uuppppppu.......","....upuuuuuuu.......","...upppupppupu......","..upppppuppupuu.....","..uppppupppuppu.....",".uppppuuuuupppuu....",".uppppupppuppupu..aa",".uppppppppupppppuaaa",".upppppppuaappppuaaa",".uppppppuaaappppuaaa",".uuuppppuaaappppuaaa","..uuuuuuuaaaauuuu.aaa","...uppppaaapu.......","...uxxxxxxxxu.......","...uxxxxxxxxxu......","...uxxxxxxxxxu......","....upppppppppu.....","....uppppppppppu.....","....uppppppppppu....","....upppppppppppu...","....upppppppppppu...","....upppppuppppppu..","...upppppu.upppppu...","..uupppppu..upppppu..","..uppppppu.upppppu...",".uupppppuu.upppu....",".uuppppppu.uppppu....",".uuuppppu...upppu.....",".uuuupu...uuppu......",".uuuuu....uuupu......",".uuu....uuuuuu.......","..uu....uuuuu.......","..uu....uuuuu.......","..uu.....uuuu.......","...........uu.......","............u......."];
 const jetpackData=["......yyyyyy",".....yyyyyyy","....yyyyyyyy","..yyyyyyyyyy","byyyyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","bgggyyyyyyyy","byyyyyyyyyyy","..yyyyyyyyyy","....yyyyyyyy",".....yyyyyyy",".....yyyyyyy","......yyyyyy"];
+const fuelCanData=["....bbbbbbbb.....bbb","...brrrrrrrrb...bbwb","..brrrrrrrrrrb.bybbb",".brrrbbbbbbbrrbyyyb.","brrrrb.....brrrbyb..","brrrrrbbbbbrrrrrb...","brrrrrrrrrrrrrrrrbb.","brbbbrbrrbrbbbrbrrb.","brbrrrbrrbrrrrrbrrb.","brbbrrbrrbrbbrrbrrb.","brbrrrbrrbrbrrrbrrb.","brbrrrbbbbrbbbrbbrb.","brrrrrrrrrrrrrrrrrb.","brurrrrrrrrrrrrrurb.","brrurrrrrrrrrrrurrb.","brrrurrrrrrrrrurrrbb.","brrrruuuuuuuuurrrrb.","brrrurrrrrrrrrurrrb.","brrurrrrrrrrrrrurrb.","brurrrrrrrrrrrrrurb.","brrrrrrrrrrrrrrrrrb.",".bbbbbbbbbbbbbbbbb.."];
 
 const fireFrame1=["...d.dd...","y...dld.b","w.d.d.ldb","..y..ddllb","..ddddlllb",".dddllrrrb","ddllrrrrrb",".ddlllrrrb","w.yddllllb","..dlldddlb","..d.d.d.db","...d.....b","........."];
 const fireFrame2=[".........b","....d..ddb","w..drdrdlb","..lddllrb",".ddllrrrb","d.dllrrrrb","ddlllrrrb","...ddrrlrb","..w.ddddlb","...ydrd.db",".........b"];
@@ -191,6 +248,9 @@ let player={x:80,y:0,vy:0,frameCounter:0,isClicking:false,inputDisabled:false,fi
 let groundOffset=0;let gameStarted=false;let countdownValue=3;let countdownTime=0;let score=0;let gameOver=false;let finalScore=0;
 let obstacles=[];let obstacleSpawnTimer=0;const SPAWN_INTERVAL=1000;
 let coins=[];let coinSpawnTimer=0;const COIN_SPAWN_INTERVAL=1333;
+let fuel=5;const MAX_FUEL=100;const BOOST_FUEL_COST=0.2;
+let fuelCans=[];let fuelStageKey=-1;let fuelCanPlan=[];
+let memoryGame={active:false,cards:[],selected:[],matched:0,wrong:0,reward:0};
 let sandflies=[];let sandflySpawnTimer=0;let sandstorms=[];let sandstormSpawnTimer=0;
 let floatingEyes=[];let eyeSpawnTimer=0;let laserActive=false;let laserFrameCount=0;
 
@@ -201,6 +261,7 @@ player.y=canvas.height/2;player.vy=0;player.frameCounter=0;player.inputDisabled=
 groundOffset=0;gameStarted=false;countdownValue=3;countdownTime=0;score=0;gameOver=false;finalScore=0;
 lastStageIndex=-1;
 obstacles=[];obstacleSpawnTimer=0;coins=[];coinSpawnTimer=0;
+fuel=35;fuelCans=[];fuelStageKey=-1;fuelCanPlan=[];closeMemoryGame(false);
 sandflies=[];sandflySpawnTimer=0;sandstorms=[];sandstormSpawnTimer=0;
 floatingEyes=[];eyeSpawnTimer=0;laserFrameCount=0;
 desertDunes=[];desertCacti=[];desertSkeletons=[];desertSpawnTimer=0;
@@ -695,6 +756,99 @@ const s=PIXEL*2.5;const cx=coins[i].x,cy=coins[i].y;
 if(pR>cx&&pL<cx+s*2&&pB>cy&&pT<cy+s*2){coinCount++;localStorage.setItem('pixelJetpackCoins',coinCount);coins.splice(i,1);}
 }}
 
+function getStageRunKey(){return Math.floor(score/STAGE_DURATION);}
+function planFuelCansForStage(){
+fuelCanPlan=[];
+const count=rng()<0.55?1:2;
+const slots=count===1?[0.45]:[0.28,0.68];
+for(let i=0;i<count;i++)fuelCanPlan.push({time:STAGE_DURATION*slots[i]+rng()*2500,spawned:false});
+}
+function spawnFuelCan(){fuelCans.push({x:canvas.width+20,y:canvas.height*(0.18+rng()*0.58),frameCounter:0});}
+function updateFuelCans(){
+const key=getStageRunKey();
+if(key!==fuelStageKey){fuelStageKey=key;planFuelCansForStage();}
+const stageTime=score%STAGE_DURATION;
+fuelCanPlan.forEach(function(slot){if(!slot.spawned&&stageTime>=slot.time){spawnFuelCan();slot.spawned=true;}});
+for(let i=fuelCans.length-1;i>=0;i--){fuelCans[i].x-=GROUND_SPEED;fuelCans[i].frameCounter++;if(fuelCans[i].x<-120)fuelCans.splice(i,1);}
+}
+function drawFuelCans(){
+const cmap=Object.assign({},colorMap,{'r':'#e43b44','u':'#8f1d2c','y':'#f5c542'});
+fuelCans.forEach(function(can){
+const bob=Math.sin(can.frameCounter*0.08)*PIXEL*1.5;
+drawPixelArt(fuelCanData,can.x,can.y+bob,PIXEL*0.5,cmap);
+});
+}
+function checkFuelCanCollision(){
+const pL=player.x,pR=player.x+8*PIXEL,pT=player.y,pB=player.y+BIKE_HEIGHT;
+for(let i=fuelCans.length-1;i>=0;i--){
+const scale=PIXEL*0.9;const can=fuelCans[i];const w=20*scale,h=22*scale;
+if(pR>can.x&&pL<can.x+w&&pB>can.y&&pT<can.y+h){fuelCans.splice(i,1);openMemoryGame();return;}
+}
+}
+function shuffleList(items){
+const copy=items.slice();
+for(let i=copy.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));const t=copy[i];copy[i]=copy[j];copy[j]=t;}
+return copy;
+}
+function getMemoryPairs(){
+const cards=(activeQuestionPack&&activeQuestionPack.cards?activeQuestionPack.cards:QUESTION_PACKS.starter.cards).slice();
+return shuffleList(cards).slice(0,Math.min(4,cards.length));
+}
+function openMemoryGame(){
+player.isClicking=false;player.vy=0;
+const pairs=getMemoryPairs();
+const cards=[];
+pairs.forEach(function(pair,idx){
+cards.push({pair:idx,type:'term',text:pair.term,matched:false});
+cards.push({pair:idx,type:'definition',text:pair.definition,matched:false});
+});
+memoryGame={active:true,cards:shuffleList(cards),selected:[],matched:0,wrong:0,reward:0};
+renderMemoryGame();
+memoryScreen.style.display='flex';
+}
+function closeMemoryGame(addFuel){
+if(addFuel)fuel=Math.min(MAX_FUEL,fuel+memoryGame.reward);
+memoryGame={active:false,cards:[],selected:[],matched:0,wrong:0,reward:0};
+if(memoryScreen)memoryScreen.style.display='none';
+}
+function renderMemoryGame(){
+if(!memoryGame.active)return;
+memoryGrid.innerHTML='';
+memoryStatus.textContent=activeQuestionPack.name+' | Misses: '+memoryGame.wrong+' | Match all cards for fuel';
+memoryGame.cards.forEach(function(card,idx){
+const btn=document.createElement('button');
+btn.type='button';
+btn.className='memory-card';
+if(card.matched)btn.className+=' matched';
+if(memoryGame.selected.indexOf(idx)!==-1)btn.className+=' selected';
+btn.textContent=card.text;
+btn.disabled=card.matched;
+btn.addEventListener('click',function(e){e.stopPropagation();chooseMemoryCard(idx);});
+memoryGrid.appendChild(btn);
+});
+memoryFinish.style.display=memoryGame.matched===memoryGame.cards.length?'block':'none';
+if(memoryGame.matched===memoryGame.cards.length){
+memoryStatus.textContent='Complete! Misses: '+memoryGame.wrong+' | Fuel earned: '+memoryGame.reward;
+}
+}
+function chooseMemoryCard(idx){
+if(!memoryGame.active)return;
+const card=memoryGame.cards[idx];
+if(card.matched||memoryGame.selected.indexOf(idx)!==-1||memoryGame.selected.length>=2)return;
+memoryGame.selected.push(idx);renderMemoryGame();
+if(memoryGame.selected.length===2){
+const a=memoryGame.cards[memoryGame.selected[0]],b=memoryGame.cards[memoryGame.selected[1]];
+if(a.pair===b.pair&&a.type!==b.type){
+a.matched=true;b.matched=true;memoryGame.matched+=2;memoryGame.selected=[];
+if(memoryGame.matched===memoryGame.cards.length)memoryGame.reward=Math.max(18,45-memoryGame.wrong*5);
+renderMemoryGame();
+}else{
+memoryGame.wrong++;
+setTimeout(function(){memoryGame.selected=[];renderMemoryGame();},650);
+}
+}
+}
+
 function spawnObstacle(){
 if(isDesert()||isSpace())return;
 const roll=rng();
@@ -752,25 +906,30 @@ if(pR>obs.x&&pL<obs.x+w&&pB>obs.y&&pT<obs.y+h)return true;
 return false;
 }
 
-function applyBoost(){player.vy=BOOST_FORCE;}
+function applyBoost(){
+if(fuel<=0){player.isClicking=false;return;}
+player.vy=BOOST_FORCE;
+fuel=Math.max(0,fuel-BOOST_FUEL_COST);
+if(fuel<=0)player.isClicking=false;
+}
 
 window.addEventListener('keydown',function(e){
 if(e.code==='Space'){
 e.preventDefault();
-if(showHome)return;
+if(showHome||memoryGame.active)return;
 if(gameOver){showHomeScreen();}
-else if(!player.inputDisabled)player.isClicking=true;
+else if(!player.inputDisabled&&fuel>0)player.isClicking=true;
 }
 });
 window.addEventListener('keyup',function(e){if(e.code==='Space')player.isClicking=false;});
-canvas.addEventListener('mousedown',function(){if(!showHome&&!gameOver&&!player.inputDisabled)player.isClicking=true;});
+canvas.addEventListener('mousedown',function(){if(!showHome&&!gameOver&&!memoryGame.active&&!player.inputDisabled&&fuel>0)player.isClicking=true;});
 canvas.addEventListener('mouseup',function(){player.isClicking=false;});
-canvas.addEventListener('touchstart',function(e){if(!showHome&&!gameOver&&!player.inputDisabled){e.preventDefault();player.isClicking=true;}},{passive:false});
+canvas.addEventListener('touchstart',function(e){if(!showHome&&!gameOver&&!memoryGame.active&&!player.inputDisabled&&fuel>0){e.preventDefault();player.isClicking=true;}},{passive:false});
 canvas.addEventListener('touchend',function(){player.isClicking=false;});
-canvas.addEventListener('click',function(){if(gameOver)showHomeScreen();});
+canvas.addEventListener('click',function(){if(gameOver&&!memoryGame.active)showHomeScreen();});
 
 function update(){
-if(showHome||gameOver)return;
+if(showHome||gameOver||memoryGame.active)return;
 const delta=getDeltaTime();
 if(!gameStarted){
 countdownTime+=delta;
@@ -791,13 +950,13 @@ return;
 }
 if(player.y<0)player.y=0;
 if(player.y>groundY()-BIKE_HEIGHT)player.y=groundY()-BIKE_HEIGHT;
-updateObstacles();updateCoins();updateDesertEnemies();spawnDesertElements();updateSpaceEnemies();
+updateObstacles();updateCoins();updateFuelCans();updateDesertEnemies();spawnDesertElements();updateSpaceEnemies();
 if(!damagelessMode&&(checkObstacleCollision()||checkDesertCollisions()||checkSpaceCollisions())){
 gameOver=true;finalScore=Math.floor(score);
 if(finalScore>highScore){highScore=finalScore;localStorage.setItem('pixelJetpackHighScore',highScore);}
 return;
 }
-checkCoinCollision();groundOffset+=GROUND_SPEED;
+checkCoinCollision();checkFuelCanCollision();groundOffset+=GROUND_SPEED;
 }
 
 function draw(){
@@ -825,7 +984,7 @@ if (isSpace()) {
 
     ctx.restore();
 }
-drawClouds();drawMountains();drawTrees();drawGround();drawObstacles();drawDesertEnemies();drawSpaceEnemies();drawCoins();
+drawClouds();drawMountains();drawTrees();drawGround();drawObstacles();drawDesertEnemies();drawSpaceEnemies();drawCoins();drawFuelCans();
 }
 
 const PLAYER_SCALE = PIXEL * 0.35;
@@ -862,8 +1021,12 @@ const hudSize=Math.floor(3*PIXEL);
 ctx.fillStyle='#fff';ctx.font='bold '+hudSize+'px "Press Start 2P"';
 ctx.textAlign='left';ctx.textBaseline='top';
 ctx.fillText('Score: '+Math.floor(score),20,20);
-ctx.textAlign='center';ctx.fillText('Coins: '+coinCount,canvas.width/2,20);
+ctx.textAlign='center';ctx.fillText('Fuel: '+Math.floor(fuel)+'%',canvas.width/2,20);
 ctx.textAlign='right';ctx.fillText('High: '+highScore,canvas.width-20,20);
+const barW=Math.min(260,canvas.width*0.35),barH=12,barX=canvas.width/2-barW/2,barY=20+hudSize+10;
+ctx.fillStyle='#111';ctx.fillRect(barX,barY,barW,barH);
+ctx.fillStyle=fuel>30?'#22cc44':'#ff4444';ctx.fillRect(barX,barY,barW*(fuel/MAX_FUEL),barH);
+ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(barX,barY,barW,barH);
 }
 if(gameOver){
 ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -914,13 +1077,16 @@ else if(o.type==='ufo'){drawPixelArtCtx(hctx,ufoFrames[fi%3],o.x,o.y,PIXEL,{'c':
 });
 }
 
-function updateHomeStats(){homeStats.innerHTML='HIGH SCORE: '+highScore+'<br>COINS: '+coinCount;}
+function updateHomeStats(){homeStats.innerHTML='HIGH SCORE: '+highScore+'<br>COINS: '+coinCount+'<br>PACKS: starter science maths';}
 function showHomeScreen(){showHome=true;homeScreen.style.display='flex';updateHomeStats();initHomeBgObstacles();ctx.clearRect(0,0,canvas.width,canvas.height);}
 
 function handleStartClick(){
 const code=devCodeInput.value.trim().toLowerCase();
-if(code==='dinosaur')devMode='dinosaur';else if(code==='desert')devMode='desert';else if(code==='space')devMode='space';else devMode=null;
-damagelessMode=(code==='damageless');
+const parts=code.split(/\s+/).filter(Boolean);
+if(parts.indexOf('dinosaur')!==-1)devMode='dinosaur';else if(parts.indexOf('desert')!==-1)devMode='desert';else if(parts.indexOf('space')!==-1)devMode='space';else devMode=null;
+damagelessMode=(parts.indexOf('damageless')!==-1);
+const packKey=parts.find(function(part){return QUESTION_PACKS[part];});
+activeQuestionPack=packKey?QUESTION_PACKS[packKey]:QUESTION_PACKS.starter;
 showHome=false;homeScreen.style.display='none';resetGame();gameStarted=false;
 }
 
@@ -929,6 +1095,9 @@ startBtn.addEventListener('touchend',function(e){e.preventDefault();e.stopPropag
 devCodeInput.addEventListener('keydown',function(e){e.stopPropagation();});
 devCodeInput.addEventListener('mousedown',function(e){e.stopPropagation();});
 devCodeInput.addEventListener('touchstart',function(e){e.stopPropagation();});
+memoryScreen.addEventListener('mousedown',function(e){e.stopPropagation();});
+memoryScreen.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
+memoryFinish.addEventListener('click',function(e){e.stopPropagation();closeMemoryGame(true);});
 
 function loop(){
 const now=performance.now();
