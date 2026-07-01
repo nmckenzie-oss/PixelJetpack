@@ -124,6 +124,7 @@ const VISUAL_SPEED=GROUND_SPEED*1.5;
 const CEILING_REPEL_FORCE=0.5;
 const STAGE_DURATION=30000;
 const TRANSITION_DURATION=5000;
+const SANDFLY_STRAIGHT_LINE_POINT = 0.40; // 40%
 
 let devMode=null;
 let damagelessMode=false;
@@ -281,9 +282,11 @@ function closeShop(){shopScreen.style.display='none';}
 
 // Teacher setup: these are secret session codes mapped to separate JSON files.
 // Add more entries here when you create a new question bank file.
+// data names follow the format '<year><term><Subject initial>'
 const QUESTION_BANK_FILES={
-'9bio-water':'question-banks/year-9-biology.json',
-'11-2-f':'question-banks/year-11-chemistry.json',
+'92b':'question-banks/year-9-biology.json',
+'112cf':'question-banks/year-11-chemistryall.json',
+'112mm':'question-banks/year-11-chemistrymolmass.json',
 '123sd':'question-banks/dancegenres.json',
 '123p':'question-banks/pacificagenres.json',
 };
@@ -680,7 +683,8 @@ else{
 const dx=player.x-sf.x;const dy=player.y-sf.y;
 const dist=Math.sqrt(dx*dx+dy*dy);
 if(dist>1){sf.x+=(dx/dist)*sf.speed;sf.y+=(dy/dist)*sf.speed;}
-if(sf.x<=canvas.width*0.2)sf.goingLeft=true;
+if(sf.x <= canvas.width * SANDFLY_STRAIGHT_LINE_POINT)
+    sf.goingLeft = true;
 }
 sf.frameCounter++;if(sf.frameCounter%10===0)sf.frame=1-sf.frame;
 if(sf.x<-100)sandflies.splice(i,1);
