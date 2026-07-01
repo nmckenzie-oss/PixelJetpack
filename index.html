@@ -162,20 +162,20 @@ owned:{silverSpawn:false,deathCoin:false,magnet:false,startingShield:false,doubl
 toggles:{doubleGas:false,halfGas:false}
 };
 const SHOP_UPGRADES=[
-{id:'scoreMultiplier',name:'Increase Score Multiplier',detail:'Score grows 0.1% faster per level.',baseCost:10,cost:function(level){return 10+10*level;}},
+{id:'scoreMultiplier',name:'Increase Score Multiplier',detail:'Score grows 0.1% faster per level.',baseCost:5,cost:function(level){return 5+5*level;}},
 {id:'fuelEfficiency',name:'Increase Fuel Efficiency',detail:'Fuel drains 10% slower per level.',baseCost:10,cost:function(level){return 10+10*level*level;}},
-{id:'coinNumbers',name:'Increase Coin Numbers',detail:'Allows +1 extra normal coin on screen per level.',baseCost:10,cost:function(level){return 10+10*level;}},
+{id:'coinNumbers',name:'Increase Coin Numbers',detail:'Allows +1 extra normal coin on screen per level.',baseCost:5,cost:function(level){return 5+5*level;}},
 {id:'magnetTime',name:'Magnet Time',detail:'Adds 1 second to magnet duration per level. Requires Magnet.',baseCost:50,cost:function(level){return 50+Math.ceil(10*Math.pow(level,1.5));},requires:'magnet'}
 ];
 const SHOP_SINGLES=[
-{id:'silverSpawn',name:'Silver Spawn',detail:'Unlocked silver coins have a 5% chance to replace normal coins and are worth 5 coins.',cost:100},
+{id:'silverSpawn',name:'Silver Spawn',detail:'Unlocked silver coins have a 5% chance to replace normal coins and are worth 5 coins.',cost:50},
 {id:'deathCoin',name:'Death Coin',detail:'Spawns 1 per stage. Each one collected gives a prize roll when you die.',cost:250},
 {id:'magnet',name:'Magnet',detail:'Magnet icons can appear during a run and pull coins toward you.',cost:100},
-{id:'startingShield',name:'Starting Shield',detail:'Begin each run with a shield that blocks 1 obstacle collision.',cost:1000}
+{id:'startingShield',name:'Starting Shield',detail:'Begin each run with a shield that blocks 1 obstacle collision.',cost:500}
 ];
 const SHOP_TOGGLES=[
-{id:'doubleGas',name:'Double Gas',detail:'2x fuel capacity, but gravity is 2x heavier.',cost:500,exclusive:'halfGas'},
-{id:'halfGas',name:'Half Gas',detail:'0.5x fuel capacity, but gravity is 0.5x lighter.',cost:500,exclusive:'doubleGas'}
+{id:'doubleGas',name:'Double Gas',detail:'2x fuel capacity, but gravity is 2x heavier.',cost:250,exclusive:'halfGas'},
+{id:'halfGas',name:'Half Gas',detail:'0.5x fuel capacity, but gravity is 0.5x lighter.',cost:250,exclusive:'doubleGas'}
 ];
 let shopState=loadShopState();
 let deathCoinPity=parseInt(localStorage.getItem(DEATH_PITY_KEY))||0;
@@ -290,6 +290,7 @@ const QUESTION_BANK_FILES={
 '112mm':'question-banks/year-11-chemistrymolmass.json',
 '123sd':'question-banks/dancegenres.json',
 '123p':'question-banks/pacificagenres.json',
+'10tp':'question-banks/year-10-physics.json'
 };
 let activeQuestionPack=null;
 let selectedSessionCode='';
